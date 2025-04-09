@@ -17,12 +17,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Configure AWS credentials (ensure you have set these secrets)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Ensure the ECR repository exists; if not, create it.
+      - name: Create ECR Repository if needed
+        run: |
+          aws ecr describe-repositories --repository-names nest-backend || \
+          aws ecr create-repository --repository-name nest-backend
+
+      # Log in to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build and push Docker image with multiple tags
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
+          push: true
           tags: |
-            nest-backend:latest
-            nest-backend:${{ github.run_id }}
-            nest-backend:${{ github.sha }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nest-backend:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nest-backend:${{ github.run_id }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/nest-backend:${{ github.sha }}
