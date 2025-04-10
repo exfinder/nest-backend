@@ -32,6 +32,13 @@ resource "aws_security_group" "ecs_tasks" {
   description = "Security group for ECS tasks"
   vpc_id      = aws_vpc.main.id
 
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -90,4 +97,12 @@ resource "aws_ecs_service" "app" {
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = false
   }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "nest-backend"
+    container_port   = 3000
+  }
+
+  depends_on = [aws_lb_listener.http]
 }
