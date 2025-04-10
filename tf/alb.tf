@@ -41,10 +41,13 @@ resource "aws_lb_target_group" "app" {
   health_check {
     path                = "/"
     timeout             = 5
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
+    interval            = 10
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
     matcher             = "200"
   }
+
+  deregistration_delay = 30
 }
 
 # Listener for the ALB
